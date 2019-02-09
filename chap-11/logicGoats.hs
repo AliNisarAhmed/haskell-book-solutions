@@ -21,5 +21,5 @@ module LogicGoats where
   instance TooMany (Int, Int) where
     tooMany (int1, int2) = (int1 + int2) > 42
 
-  instance TooMany (Num a, TooMany a) => TooMany (a, a) where
+  instance (Num a, TooMany a) => TooMany (a, a) where
     tooMany (x, y) = tooMany (x + y)
