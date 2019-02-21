@@ -41,3 +41,22 @@ module BinaryTree where
   testTree :: BinaryTree Integer
   testTree = 
     Node (Node Leaf 1 Leaf) 2 (Node Leaf 3 Leaf)
+
+  
+    -- Write foldr for Binary Tree
+
+  foldTree :: (a -> b -> b) -> b -> BinaryTree a -> b
+  foldTree _ b Leaf = b
+  foldTree f b (Node left a right) = bothFolded
+    where 
+      leftFolded = f a (foldTree f b left)
+      bothFolded = foldTree f leftFolded right
+
+      -- no sure if the order of folding matters
+
+  -- foldTree f b (Node left a right) = bothFolded
+  --   where
+  --     rightFolded = f a (foldTree f b right)
+  --     bothFolded = foldTree f rightFolded left
+
+
