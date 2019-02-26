@@ -7,7 +7,7 @@ module Morse
   , morseToLetter
   ) where
 
-  import qualified Data.Map as M
+  import qualified Data.Map.Strict as M
 
   type Morse = String
 
@@ -54,7 +54,7 @@ module Morse
 
   morseToLetter :: M.Map Morse Char
   morseToLetter = 
-    M.foldWithKey (flip M.insert) M.empty letterToMorse
+    M.foldrWithKey (flip M.insert) M.empty letterToMorse
   
   charToMorse :: Char -> Maybe Morse
   charToMorse c = 
