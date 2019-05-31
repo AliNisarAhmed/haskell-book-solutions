@@ -173,5 +173,26 @@ module Revision where
   betterIterate f = unfoldr g 
     where
       g a = Just (a, f a)
-    
+
+
+-----------------------------------------------
+
   
+  data BinaryTree a
+    = Leaf 
+    | Node (BinaryTree a) a (BinaryTree a)
+    deriving (Eq, Ord, Show)
+
+  unfold :: (a -> Maybe(a, b, a)) -> a -> BinaryTree b
+  unfold f a = 
+    case f a of 
+      Nothing -> Leaf
+      Just (c1, b, c2) -> Node (unfold f c1) b (unfold f c2)
+
+  treeBuild :: Integer -> BinaryTree Integer
+  treeBuild n = unfold f n
+    where
+      f :: Integer -> Maybe (Integer, Integer, Integer)
+      f number 
+        | number <= 0 = Nothing
+        | otherwise = Just (number - 1, number, number - 1)
