@@ -1,141 +1,124 @@
 module Main where
 
-import Control.Monad (forever)
-import Data.Char (toLower)
-import Data.Maybe (isJust, maybe)
-import Data.List (intersperse)
-import System.Exit (exitSuccess)
-import System.Random (randomRIO)
-import System.IO
+  import Control.Monad (forever)
+  import Data.Char (toLower)
+  import Data.Maybe (isJust)
+  import Data.List (intersperse)
+  import System.Exit (exitSuccess)
+  import System.IO (BufferMode(NoBuffering),
+                    hSetBuffering,
+                    stdout)
+  import System.Random (randomRIO)
 
-type WordList = [String]
+  type WordList = [String]
 
-allWords :: IO WordList 
-allWords = do
-  dict <- readFile "data/dict.txt"
-  return (lines dict)
+  allWords :: IO WordList
+  allWords = do
+    dict <- readFile "src/data/dict.txt"
+    return (lines dict)
 
-minWordLength :: Int
-minWordLength = 5
+  minWordLength :: Int
+  minWordLength = 5
 
-maxWordLength :: Int
-maxWordLength = 9
+  maxWordLength :: Int
+  maxWordLength = 9
 
-gameWords :: IO WordList
-gameWords = do
-  aw <- allWords
-  return (filter gameLength aw)
-  where
-    gameLength w = 
-      let
-        l = length (w :: String)
-      in 
-        l >= minWordLength && l < maxWordLength
-
-randomWord :: WordList -> IO String
-randomWord wl = do
-  randomIndex <- randomRIO (0, length wl - 1)
-  return $ wl !! randomIndex
-
-randomWord' :: IO String
-randomWord' = gameWords >>= randomWord
-
-data Puzzle 
-  = Puzzle String [Maybe Char] [Char]
-    -- Puzzle (the word) (correct guesses) (wrong guesses)
-
-instance Show Puzzle where
-  show (Puzzle _ discovered wrongs) = 
-    (intersperse ' ' $ fmap renderPuzzleChar discovered)
-    ++ " Wrong Guessed so far: " ++ wrongs
-
-freshPuzzle :: String -> Puzzle
-freshPuzzle str = Puzzle str (map f str) []
+  gameWords :: IO WordList
+  gameWords = do
+    aw <- allWords
+    return (filter gameLength aw)
     where 
-      f :: Char -> Maybe Char
-      f _ = Nothing
+      gameLength w = 
+        let 
+          l = length (w :: String)
+        in 
+          l >= minWordLength && l < maxWordLength
 
-charInWord :: Puzzle -> Char -> Bool
-charInWord (Puzzle str _ _ ) = flip elem $ str
+  randomWord :: WordList -> IO String
+  randomWord wl = do
+    randomIndex <- randomRIO (0, (length wl) - 1)
+    return $ wl !! randomIndex
 
-alreadyGuessed :: Puzzle -> Char -> Bool
-alreadyGuessed (Puzzle _ corrects wrongs) c = (flip elem $ wrongs) c || (flip elem $ converted) c
-  where
-    converted = map f corrects
-    f = maybe ' ' id
+  randomWord' :: IO String
+  randomWord' = gameWords >>= randomWord
 
-renderPuzzleChar :: Maybe Char -> Char
-renderPuzzleChar Nothing = '*'
-renderPuzzleChar (Just x) = x
+  data Puzzle 
+    = Puzzle String [Maybe Char] [Char]
 
-countJusts :: [Maybe Char] -> Int
-countJusts [] = 0
-countJusts (x:xs) = 
-  case x of 
-    Just _ -> 1 + countJusts xs
-    _ -> 0 + countJusts xs
+  instance Show Puzzle where
+    show (Puzzle _ discovered guessed) = 
+      (intersperse ' ' $ 
+        fmap renderPuzzleChar discovered)
+      ++ " Guessed so far: " ++ guessed
 
-fillInCharacter :: Puzzle -> Char -> Puzzle
-fillInCharacter (Puzzle word filledInSoFar s) c = 
-  Puzzle word newFilledInSoFar newS
+  freshPuzzle :: String -> Puzzle
+  freshPuzzle str = Puzzle str (map (const Nothing) str) []
+
+  charInWord :: Puzzle -> Char -> Bool
+  charInWord (Puzzle str _ _) char = elem char str
+
+  alreadyGuessed :: Puzzle -> Char -> Bool
+  alreadyGuessed (Puzzle _ _ guessed) char = elem char guessed
+
+  renderPuzzleChar :: Maybe Char -> Char
+  renderPuzzleChar Nothing = '*'
+  renderPuzzleChar (Just x) = x
+
+  fillInCharacter :: Puzzle -> Char -> Puzzle
+  fillInCharacter (Puzzle word filledInSoFar s) c = 
+    Puzzle word newFilledInSoFar (c:s)
     where
-      newFilledInSoFar = zipWith (zipper c) word filledInSoFar
       zipper guessed wordChar guessChar = 
         if wordChar == guessed
         then Just wordChar
         else guessChar
-      newS = 
-        if countJusts newFilledInSoFar > countJusts filledInSoFar
-        then s
-        else c : s
+      newFilledInSoFar = zipWith (zipper c) word filledInSoFar
 
-handleGuess :: Puzzle -> Char -> IO Puzzle
-handleGuess puzzle guess = do
-  putStrLn $ "Your guess was: " ++ [guess]
-  case (charInWord puzzle guess, alreadyGuessed puzzle guess) of
-    (_, True) -> do
-      putStrLn "You have already guessed that letter, pick something else"
-      return puzzle
-    (True, _) -> do
-      putStrLn "Correct! filling in the word accordingly"
-      return (fillInCharacter puzzle guess)
-    (False, _) -> do
-      putStrLn "Wrong! Try again"
-      return (fillInCharacter puzzle guess)
+  handleGuess :: Puzzle -> Char -> IO Puzzle
+  handleGuess puzzle guess = do
+    putStrLn $ "Your guess was: " ++ [guess]
+    case (charInWord puzzle guess, alreadyGuessed puzzle guess) of
+      (_, True) -> do
+        putStrLn "You've already guessed that char, pick something else"
+        return puzzle
+      (True, _) -> do
+        putStrLn "Correct guess!, filling in the word accordingly"
+        return (fillInCharacter puzzle guess)
+      (False, _) -> do
+        putStrLn "Wrong Guess!, try again"
+        return (fillInCharacter puzzle guess)
 
-gameOver :: Puzzle -> IO ()
-gameOver (Puzzle wordToGuess _ guessed) = 
-  if (length guessed) > 7 
-  then
-    do 
-      putStrLn "You Lose!"
+  gameOver :: Puzzle -> IO ()
+  gameOver (Puzzle wordToGuess _ guessed) = 
+    if (length guessed) > 7 
+    then do
+      putStrLn "You lose!"
       putStrLn $ "The word was: " ++ wordToGuess
       exitSuccess
-  else return ()
-    
-gameWin :: Puzzle -> IO ()
-gameWin (Puzzle _ filledInSoFar _) = 
-  if all isJust filledInSoFar then
-    do
-      putStrLn "You win!"
-      exitSuccess
-  else return () 
+    else return ()
 
-runGame :: Puzzle -> IO ()
-runGame puzzle = 
-  forever $ do
+  gameWin :: Puzzle -> IO ()
+  gameWin (Puzzle _ filledInSoFar _) = 
+    if all isJust filledInSoFar
+    then do
+      putStrLn "You Win!"
+      exitSuccess
+    else return ()
+
+  runGame :: Puzzle -> IO ()
+  runGame puzzle = forever $ do
     gameOver puzzle
-    gameWin puzzle
+    gameWin puzzle 
     putStrLn $ "Current puzzle is: " ++ show puzzle
-    putStrLn "Guess a Letter: "
+    putStr "Guess a letter: "
     guess <- getLine
     case guess of 
       [c] -> handleGuess puzzle c >>= runGame
-      _ -> putStrLn "You guess must be a single character"
+      _ -> putStrLn "Your guess must be a single character"
 
-main :: IO ()
-main = do
-  hSetBuffering stdout NoBuffering
-  word <- randomWord'
-  let puzzle = freshPuzzle (fmap toLower word)
-  runGame puzzle
+  main :: IO ()
+  main = do 
+    hSetBuffering stdout NoBuffering
+    word <- randomWord'
+    let puzzle = freshPuzzle (fmap toLower word)
+    runGame puzzle
