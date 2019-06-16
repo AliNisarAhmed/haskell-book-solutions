@@ -5,43 +5,39 @@ module Main where
   import Data.Traversable (traverse)
   import Morse (stringToMorse, morseToChar)
   import System.Environment (getArgs)
-  import System.Exit (exitFailure, exitSuccess)
+  import System.Exit (exitSuccess, exitFailure)
   import System.IO (hGetLine, hIsEOF, stdin)
-
+  
   convertToMorse :: IO ()
-  convertToMorse = forever $ do
+  convertToMorse = forever $ do 
     weAreDone <- hIsEOF stdin
     when weAreDone exitSuccess
-
-    -- otherwwise proceed
     line <- hGetLine stdin
     convertLine line
-    where
-      convertLine line = do
-        let morse = stringToMorse line
-        case morse of 
-          (Just str)
-            -> putStrLn (intercalate " " str)
-          Nothing
-            -> do 
-              putStr $ "ERROR: " ++ line
+      where
+        convertLine line = do
+          let morse = stringToMorse line
+          case morse of 
+            Just str -> putStrLn (intercalate " " str)
+            Nothing -> do 
+              putStrLn $ "Error: " ++ line
               exitFailure
-
+              
   convertFromMorse :: IO ()
-  convertFromMorse = forever $ do
+  convertFromMorse = forever $ do 
     weAreDone <- hIsEOF stdin
     when weAreDone exitSuccess
-
-    -- otherwise proceed
     line <- hGetLine stdin
     convertLine line
     where
       convertLine line = do
-        let decoded :: Maybe String
-            decoded = traverse morseToChar (words line)
+        let 
+          decoded :: Maybe String
+          decoded = 
+            traverse morseToChar (words line)
         case decoded of 
-          (Just s) -> putStrLn s
-          Nothing -> do
+          Just s -> putStrLn s 
+          Nothing -> do 
             putStrLn $ "Error: " ++ line
             exitFailure
 
@@ -49,14 +45,13 @@ module Main where
   main = do 
     mode <- getArgs
     case mode of 
-      [arg] ->
+      [arg] -> 
         case arg of 
           "from" -> convertFromMorse
           "to" -> convertToMorse
           _ -> argError
       _ -> argError
-    where 
-      argError = 
-        do
-          putStrLn "Please specify the first argument as being 'from' or 'to' morse, such as: morse to"
+      where
+        argError = do 
+          putStrLn "Please select first argument as one of from or to"
           exitFailure

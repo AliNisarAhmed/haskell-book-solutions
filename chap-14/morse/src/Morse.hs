@@ -1,19 +1,11 @@
-module Morse
-  ( Morse
-  , charToMorse
-  , morseToChar
-  , stringToMorse
-  , letterToMorse
-  , morseToLetter
-  ) where
+module Morse where
 
   import qualified Data.Map.Strict as M
 
   type Morse = String
 
   letterToMorse :: (M.Map Char Morse)
-  letterToMorse = 
-    M.fromList [
+  letterToMorse = M.fromList [
       ('a', ".-")
     , ('b', "-...")
     , ('c', "-.-.")
@@ -55,15 +47,17 @@ module Morse
   morseToLetter :: M.Map Morse Char
   morseToLetter = 
     M.foldrWithKey (flip M.insert) M.empty letterToMorse
-  
+
+  -- We are working with two Maps one is (Morse, Char) other is (Char, Morse) 
+
   charToMorse :: Char -> Maybe Morse
   charToMorse c = 
     M.lookup c letterToMorse
-  
+
   stringToMorse :: String -> Maybe [Morse]
   stringToMorse s = 
     sequence $ fmap charToMorse s
 
   morseToChar :: Morse -> Maybe Char
-  morseToChar m =
+  morseToChar m = 
     M.lookup m morseToLetter
