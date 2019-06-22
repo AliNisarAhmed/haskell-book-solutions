@@ -4,6 +4,7 @@ module Main where
   import Lib
   import Test.QuickCheck
   import Data.List (sort)
+  import Data.Char (toUpper)
 
 
   -- main :: IO ()
@@ -109,11 +110,11 @@ module Main where
 
   -- Checking if (^) is associative
 
-  twoArbitrary :: (Integral a, Eq a, Arbitrary a) => Gen (a, a)
-  twoArbitrary = do 
-    a <- arbitrary
-    b <- arbitrary
-    return (a, b)
+  -- twoArbitrary :: (Integral a, Eq a, Arbitrary a) => Gen (a, a)
+  -- twoArbitrary = do 
+  --   a <- arbitrary
+  --   b <- arbitrary
+  --   return (a, b)
 
   threeArbitrary :: (Integral a, Eq a, Arbitrary a) => Gen (a, a, a)
   threeArbitrary = do 
@@ -155,7 +156,105 @@ module Main where
   prop_reverse_str :: [String] -> Bool
   prop_reverse_str xs = (reverse . reverse) xs == (id xs)
 
+  -- main :: IO ()
+  -- main = do 
+  --   quickCheck prop_reverse_int
+  --   quickCheck prop_reverse_str
+
+  ----------------------------------------------------
+
+  -- forAll :: (Show a, Testable prop) => Gen a -> (a -> prop) -> Property
+
+  -- prop_dollar :: (a -> b) -> a -> Bool
+  -- prop_dollar f a = 
+  --   f $ a == f a
+
+  twoArbitrary :: (Eq a, Eq b, Arbitrary a, Arbitrary b) => Gen (a, b)
+  twoArbitrary = do 
+    x <- arbitrary
+    y <- arbitrary
+    return (x, y)
+
+  twoArbitraryIntString :: Gen (Int, String)
+  twoArbitraryIntString = (twoArbitrary :: Gen (Int, String))
+
+  prop_dollar :: (Eq a, Show a, Eq b) => (a -> b) -> Gen a -> Property
+  prop_dollar f gen = 
+    forAll gen (\x -> (f $ x) == f x)
+
+  -- main :: IO ()
+  -- main = quickCheck (prop_dollar snd (twoArbitrary :: Gen (Int, Int)))
+
+  -- main :: IO ()
+  -- main = quickCheck (prop_dollar snd twoArbitraryIntString)
+
+  ----  COMPOSITION
+
+  prop_composition :: (Show a, Eq c) => (b -> c) -> (a -> b) -> Gen a -> Property
+  prop_composition f g gen = 
+    forAll gen (\x -> (f . g) x == (\x -> f (g x)) x)
+
+  -- main :: IO ()
+  -- main = quickCheck (prop_composition (map toUpper) snd twoArbitraryIntString)
+
+  ----------------------------------------
+
+  listGen :: (Arbitrary a, Eq a) => Gen [a]
+  listGen = do 
+    x <- arbitrary 
+    y <- arbitrary `suchThat` (/= x)
+    z <- arbitrary `suchThat` (\d -> d /= x && d /= y)
+    return [x, y, z]
+    
+  listGenInt :: Gen [Int]
+  listGenInt = (listGen :: Gen [Int])
+  
+  oneArbitrary :: Arbitrary a => Gen a
+  oneArbitrary = do 
+    a <- arbitrary
+    return a
+
+  oneArbitraryInt :: Gen Int
+  oneArbitraryInt = (oneArbitrary :: Gen Int)
+
+  prop_plusPlus :: (Eq a, Show a) => Gen [a] -> Property
+  prop_plusPlus gen = 
+    forAll gen (\x -> foldr (:) x x == (++) x x)
+
+  prop_concat :: (Eq a, Show a) => Gen [a] -> Property
+  prop_concat gen = 
+    forAll gen (\x -> foldr (++) [] [x] == concat [x])
+
+  -- main :: IO ()
+  -- main = quickCheck (prop_plusPlus listGenInt)
+  
+  -- main :: IO ()
+  -- main = quickCheck $ prop_concat listGenInt
+
+  -------------------------------------------------------
+
+  -- prop_hmm :: (Show a, Arbitrary a) => Int -> Gen [a] -> Property
+  -- prop_hmm int gen = 
+  --   forAll gen (\xs -> length (take int xs) == int) 
+
+  -- main :: IO ()
+  -- main = quickCheck (prop_hmm 3 listGenInt)
+
+  -- Another Way
+
+  evalLengthTake :: Int -> [a] -> Bool
+  evalLengthTake n xs = length (take n xs) == n
+
+  prop_lengthTakeSafe :: Property
+  prop_lengthTakeSafe = 
+    forAll (listOf (arbitrary :: Gen Int)) (\xs -> 
+      forAll (choose (0, length xs)) (\n -> 
+        evalLengthTake n xs))
+
   main :: IO ()
-  main = do 
-    quickCheck prop_reverse_int
-    quickCheck prop_reverse_str
+  main = quickCheck prop_lengthTakeSafe
+
+  ----------------------------------------------------------
+
+
+  
