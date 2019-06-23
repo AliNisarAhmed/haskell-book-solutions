@@ -251,10 +251,21 @@ module Main where
       forAll (choose (0, length xs)) (\n -> 
         evalLengthTake n xs))
 
-  main :: IO ()
-  main = quickCheck prop_lengthTakeSafe
+  -- main :: IO ()
+  -- main = quickCheck prop_lengthTakeSafe
 
   ----------------------------------------------------------
 
+  evalReadShow :: (Eq a, Show a, Read a) => a -> Bool
+  evalReadShow x = (read (show x)) == x
+
+  prop_readShow :: (Eq a, Show a, Read a) => Gen a -> Property
+  prop_readShow gen = 
+    forAll gen (\x -> evalReadShow x)
+
+  main :: IO ()
+  main = do 
+    quickCheck $ prop_readShow (arbitrary :: Gen Int)
+    quickCheck $ prop_readShow (arbitrary :: Gen String)
 
   
