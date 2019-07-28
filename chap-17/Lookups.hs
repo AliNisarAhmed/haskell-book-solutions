@@ -43,6 +43,6 @@ y :: Maybe Integer
 y = lookup 2 $ zip xs ys
 
 summed :: Maybe Integer
-summed = pure $ (fmap sum) $ (,) x y
+summed =  sum <$> ( (,) <$> x <*> y)
 
 -------------------------

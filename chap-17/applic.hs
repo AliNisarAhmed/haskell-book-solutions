@@ -17,3 +17,7 @@ n1 z =
 
 n2 x =
   lookup x [(6, 10), (7, 13),(8, 9001)]
+
+------
+
+data MT a = MT { getT :: a} deriving (Eq, Show)
