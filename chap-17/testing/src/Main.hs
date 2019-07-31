@@ -1,7 +1,7 @@
 module Main where
 
 import Control.Applicative
-import Data.Monoid
+-- import Data.Monoid
 import Test.QuickCheck
 import Test.QuickCheck.Checkers
 import Test.QuickCheck.Classes
@@ -329,9 +329,9 @@ instance (Eq a, Eq b) => EqProp (Four a b) where
 
 type FourApp = Four String (Int, Int, Int)
 
-main :: IO ()
-main =
-  quickBatch $ applicative (Four "a" "b" "c" (1, 2, 3) :: FourApp)
+-- main :: IO ()
+-- main =
+--   quickBatch $ applicative (Four "a" "b" "c" (1, 2, 3) :: FourApp)
 
 --------------------------------------------------------------------------------
 
@@ -343,3 +343,41 @@ vowels = "aeiou"
 
 combos :: [a] -> [b] -> [c] -> [(a, b, c)]
 combos = liftA3 (\a b c -> (a, b, c))
+
+---------- Exer Chapter 18 -------------
+
+data Sum a b
+  = First a
+  | Second b
+  deriving (Eq, Show)
+
+instance Functor (Sum a) where
+  fmap _ (First a) = First a
+  fmap f (Second b) = Second (f b)
+
+instance Monoid a => Applicative (Sum a) where
+  pure = Second
+  (<*>) (First a1) (First a2) = First (a1 <> a2)
+  (<*>) (First a) _ = First a
+  (<*>) _ (First b) = First b
+  (<*>) (Second f) (Second x) = Second (f x)
+
+instance Monoid a => Monad (Sum a) where
+  return = pure
+  (>>=) (First a) _ = First a
+  (>>=) (Second b) f = f b
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Sum a b) where
+  arbitrary = do
+    x <- arbitrary
+    y <- arbitrary
+    frequency [(1, return $ First x), (1, return $ Second y)]
+
+instance (Eq a, Eq b) => EqProp (Sum a b) where
+  (=-=) = eq
+
+type RightMonad = Sum String (Int, String, Int)
+
+main :: IO ()
+main = quickBatch $ monad (Second (1, "ali", 2) :: RightMonad)
+

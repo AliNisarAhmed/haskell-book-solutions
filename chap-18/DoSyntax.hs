@@ -9,7 +9,7 @@ sequencing = do
 
 sequencing' :: IO ()
 sequencing' =
-  putStrLn "Hello" >> putStrLn "World"
+  (putStrLn "Hello" >> putStrLn "World") >> putStrLn "!"
 
 sequencing'' :: IO ()
 sequencing'' =
