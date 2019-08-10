@@ -57,3 +57,14 @@ chap-18/testing/.stack-work/dist/e626a42b/build/testing/autogen/cabal_macros.h
 chap-18/testing/.stack-work/ghci/a701e962/cabal_macros.h
 chap-18/testing/.stack-work/install/804f060a/pkgdb/package.cache
 chap-18/testing/.stack-work/install/804f060a/pkgdb/package.cache.lock
+chap-19/url-shortener/.stack-work/stack.sqlite3
+chap-19/url-shortener/.stack-work/install/74ffa373/pkgdb/package.cache
+chap-19/url-shortener/.stack-work/install/74ffa373/pkgdb/package.cache.lock
+chap-19/url-shortener/.stack-work/ghci/eea0dd29/cabal_macros.h
+chap-19/url-shortener/.stack-work/dist/e626a42b/build/url-shortener/autogen/cabal_macros.h
+chap-19/url-shortener/.stack-work/dist/e626a42b/setup-config
+chap-19/url-shortener/.stack-work/dist/e626a42b/stack-cabal-mod
+chap-19/url-shortener/.stack-work/dist/e626a42b/build-lock
+chap-19/url-shortener/.stack-work/stack.sqlite3.pantry-write-lock
+chap-19/url-shortener/LICENSE
+chap-19/url-shortener/stack.yaml
