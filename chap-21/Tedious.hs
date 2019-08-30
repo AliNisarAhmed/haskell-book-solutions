@@ -22,8 +22,10 @@ pipelineFn query = do
 -- (( traverse makeIoOnlyObj . mapM decodeFn) =<< ) . fetchFn
 -------------------
 -- pipelineFn query = do
---   a <- fetchFn query  -- IO [String]
---   case sequence (map decodeFn a) of -- (map decodeFn a) => [Either Err SomeObj]
+--   a <- fetchFn query  -- IO [String] -- hence a = [String]
+-- (map decodeFn a) => [Either Err SomeObj]
+-- after sequence => Either Err [SomeObj]
+--   case sequence (map decodeFn a) of
 --     (Left err) -> return $ Left err
 --     (Right res) -> do  -- res :: [SomeObj]
 --       a <- makeIoOnlyObj res  -- IO [(SomeObj, IoOnlyObj)]
