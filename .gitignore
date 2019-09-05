@@ -68,3 +68,8 @@ chap-19/url-shortener/.stack-work/dist/e626a42b/build-lock
 chap-19/url-shortener/.stack-work/stack.sqlite3.pantry-write-lock
 chap-19/url-shortener/LICENSE
 chap-19/url-shortener/stack.yaml
+chap-21/exercises/ChangeLog.md
+chap-21/exercises/LICENSE
+chap-21/exercises/stack.yaml
+chap-21/exercises/package.yaml
+chap-21/exercises/stack.yaml.lock
