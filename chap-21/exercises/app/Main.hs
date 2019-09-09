@@ -139,6 +139,9 @@ instance Foldable Optional where
   foldMap _ Nada = mempty
   foldMap f (Yep x) = f x
 
+instance Traversable Optional where
+  traverse f (Yep x) = Yep <$> f x
+
 instance Arbitrary a => Arbitrary (Optional a) where
   arbitrary = Yep <$> arbitrary
 
@@ -150,9 +153,69 @@ type TestOpt = Optional (Sum Int, String, Maybe Int)
 testOpt :: TestOpt
 testOpt = Nada
 
+-- main :: IO ()
+-- main = do
+--   quickBatch $ functor testOpt
+--   quickBatch $ applicative testOpt
+--   quickBatch $ monad testOpt
+--   quickBatch $ traversable testConstant
+
+------------------------------------------------------------
+
+data List a
+  = Nil
+  | Cons a (List a) deriving (Eq, Show)
+
+instance Semigroup (List a) where
+  (<>) Nil Nil = Nil
+  (<>) Nil x = x
+  (<>) x Nil = x
+  (<>) (Cons a listA) y = Cons a (listA <> y)
+
+instance Semigroup a => Monoid (List a) where
+  mempty = Nil
+
+instance Functor List where
+  fmap _ Nil = Nil
+  fmap f (Cons x listA) = Cons (f x) (fmap f listA)
+
+instance Applicative List where
+  pure x = Cons x Nil
+  (<*>) _ Nil = Nil
+  (<*>) Nil _ = Nil
+  (<*>) (Cons f fs) ys = (fmap f ys) <> (fs <*> ys)
+
+instance Monad List where
+  return = pure
+  Nil >>= _ = Nil
+  (>>=) (Cons x listX) f = (f x) <> (listX >>= f)
+
+instance Foldable List where
+  foldMap f Nil = mempty
+  foldMap f (Cons x xs) = f x <> foldMap f xs
+
+instance Traversable List where
+  traverse f Nil = pure Nil
+  traverse f (Cons x xs) = Cons <$> f x <*> traverse f xs
+
+instance Arbitrary a => Arbitrary (List a) where
+  arbitrary = do
+    x <- arbitrary
+    y <- arbitrary
+    return $ Cons x (Cons y Nil)
+
+instance Eq a => EqProp (List a) where
+  (=-=) = eq
+
+type TestList = List (String, Sum Int, Any)
+
+testList :: TestList
+testList = Cons ("abc", 2, Any True) Nil
+
 main :: IO ()
 main = do
-  quickBatch $ functor testConstant
-  quickBatch $ applicative testConstant
-  quickBatch $ monad testConstant
---   quickBatch $ traversable testConstant
+  quickBatch $ monoid testList
+  quickBatch $ functor testList
+  quickBatch $ applicative testList
+  quickBatch $ monad testList
+  quickBatch $ traversable testConstant
