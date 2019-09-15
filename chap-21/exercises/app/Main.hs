@@ -506,9 +506,9 @@ type TypeS = S [] (Int, String, [Int])
 varS :: TypeS
 varS = S [(1, "abc", [1, 2, 3])] (2, "yth", [4, 5, 6])
 
--- main :: IO ()
--- main =
---   quickBatch $ traversable biggerVar
+main :: IO ()
+main =
+  quickBatch $ traversable biggerVar
 
 -----------------------------------------------------------
 
@@ -521,6 +521,7 @@ data Tree a
 instance (Semigroup a) => Semigroup (Tree a) where
   (<>) Empty x = x
   (<>) x Empty = x
+  (<>) (Leaf x) (Leaf y) = Node Empty (x <> y) Empty
   (<>) (Node l1 a1 r1) (Node l2 a2 r2) = Node (l1 <> l2) (a1 <> a2) (r1 <> r2)
 
 instance Monoid a => Monoid (Tree a) where
@@ -528,14 +529,17 @@ instance Monoid a => Monoid (Tree a) where
 
 instance Functor Tree where
   fmap _ Empty = Empty
+  fmap f (Leaf x) = Leaf (f x)
   fmap f (Node left v right) = Node (fmap f left) (f v) (fmap f right)
 
 instance Foldable Tree where
   foldMap f Empty = mempty
+  foldMap f (Leaf x) = f x
   foldMap f (Node left v right) = (foldMap f left) <> f v <> (foldMap f right)
 
 instance Traversable Tree where
   traverse f Empty = pure Empty
+  traverse f (Leaf x) = Leaf <$> f x
   traverse f (Node left v right) = Node <$> traverse f left <*> f v <*> traverse f right
 
 instance Arbitrary a => Arbitrary (Tree a) where
@@ -544,12 +548,18 @@ instance Arbitrary a => Arbitrary (Tree a) where
 instance Eq a => EqProp (Tree a) where
   (=-=) = eq
 
-type TreeType = Tree (Int, String, [Int])
+type TreeType = Tree ((Sum Int), String, [Int])
 
 varTree :: TreeType
-varTree = Node Empty (1, "abc", [1, 2, 3]) Empty
+varTree = Empty
 
-main :: IO ()
-main = do
-  -- quickBatch $ functor varTree
-  quickBatch $ traversable varTree
+f = (Just)
+
+x = Node (Leaf 1) 2 (Leaf 3)
+y = Empty
+z = Node (Leaf 1) 0 (Leaf 4)
+
+-- main :: IO ()
+-- main = do
+--   quickBatch $ functor varTree
+  -- quickBatch $ traversable varTree
