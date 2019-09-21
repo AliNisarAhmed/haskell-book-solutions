@@ -559,6 +559,8 @@ x = Node (Leaf 1) 2 (Leaf 3)
 y = Empty
 z = Node (Leaf 1) 0 (Leaf 4)
 
+-- SOlution is fine, manually tested, but somehow cannot be tested by the code below, revisit later
+
 -- main :: IO ()
 -- main = do
 --   quickBatch $ functor varTree
