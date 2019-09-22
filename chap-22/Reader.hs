@@ -15,7 +15,7 @@ instance Functor (Reader r) where
 ask :: Reader a a
 ask = Reader id
 
---------------------------------------------------------------
+----------------------------------------
 
 -- Applicative Instance for Reader r a
 
@@ -26,12 +26,15 @@ instance Applicative (Reader r) where
   (<*>) :: Reader r (a -> b)
         -> Reader r a
         -> Reader r b
-  (Reader rab) <*> (Reader ra) = Reader $ rab <*> ra
+  (Reader rab) <*> (Reader ra) = Reader (\r -> (rab r) (ra r))
   -- rab = r -> (a -> b) => f (a -> b)
   -- ra = r -> a => f a
   -- rab <*> ra = f a => r -> b => give it to Reader, we have Reader r b
   -- OR can also be written as
-  -- Reader (\r -> (rab r) (ra r))
+  -- Reader $ rab <*> ra
+  -- But the above is banking on <*> instance for function
+  -- the Reader type was made to prove that functions have appli. instances
+  -- so the solution on line #29 is actually better
 
 x :: Reader r (Int -> Maybe Int)
 x = Reader (const Just)
@@ -42,16 +45,20 @@ y = Reader (const 2)
 z :: Reader r (Maybe Int)
 z = x <*> y
 
-------------------------------------------------------------
+---------------------------------
 
 -- Monad Instance for Reader
 
 instance Monad (Reader r) where
   return = pure
   (>>=) :: Reader r a -> (a -> Reader r b) -> Reader r b
-  (Reader ra) >>= aRb = Reader $ \r -> runReader (aRb $ ra r)
+  (Reader ra) >>= aRb = Reader $ \r -> runReader (aRb $ ra r) $ r
 
--------------------------------
+    -- ra => r -> a
+    -- aRb => a -> Reader rb
+    -- rb => r -> b
+
+--------------------------------------------------------------------
 
 -- Applicative of a function
 
@@ -97,6 +104,15 @@ getDogR = Dog <$> pDogName <*> pAddress
 -- applies pDogName to Person, pAddress to Person, and combines the results
 -- with Dog (a binary function)
 -- OR liftA2 Dog pDogName pAddress
+
+getDogRM :: Person -> Dog
+getDogRM = do
+  name <- pDogName
+  address <- pAddress
+  return $ Dog name address
+
+getDogRM' :: Reader Person Dog
+getDogRM' = Reader $ getDogRM
 
 ----------------------------------------------------------------
 
