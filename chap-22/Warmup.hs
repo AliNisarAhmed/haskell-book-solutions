@@ -20,5 +20,5 @@ tupled = do
   b <- rev
   return $ (,) a b
 
--- tupled2 :: [Char] -> ([Char], [Char])
--- tupled2 xs = xs >>= (x -> )
+tupled2 :: [Char] -> ([Char], [Char])
+tupled2 = cap >>= (\x -> rev >>= (\y -> return (x, y)))

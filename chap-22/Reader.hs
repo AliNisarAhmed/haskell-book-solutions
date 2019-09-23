@@ -26,6 +26,7 @@ instance Applicative (Reader r) where
   (<*>) :: Reader r (a -> b)
         -> Reader r a
         -> Reader r b
+  -- (Reader rf) <*> (Reader ra) = Reader (\r -> (rf r) (ra r))
   (Reader rab) <*> (Reader ra) = Reader (\r -> (rab r) (ra r))
   -- rab = r -> (a -> b) => f (a -> b)
   -- ra = r -> a => f a
@@ -123,5 +124,28 @@ myLiftA2 f a b = f <$> a <*> b
 asks :: (r -> a) -> Reader r a
 asks = Reader
 
---------------------------------------------
+------------------------------------------------------------
 
+-- Reader tutorial
+
+-- example :: String
+-- example = runReader computation "Hello"
+--   where
+--     computation :: Reader String String
+--     computation = do
+--       greeting <- ask
+--       return $ greeting ++ " Haskell"
+
+-- main = putStrLn example
+
+----------------------------
+
+example1 :: String -> String
+example1 context = runReader (computation "Tom") context
+  where
+    computation :: String -> Reader String String
+    computation name = do
+      greeting <- ask
+      return $ greeting ++ ", " ++ name
+
+main = putStrLn $ example1 "Hello"

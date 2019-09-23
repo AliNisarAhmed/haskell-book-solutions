@@ -49,6 +49,8 @@ main = do
   -- print $ sequenceA [(>3), (<8), even] 7
   print $ foldr (&&) True (seqA 3)
   print $ foldr (&&) True (seqA 4)
+  print $ seqA (fromMaybe 0 s')
+  print $ bolt (fromMaybe 0 ys)
 
   -- sequenceA :: (Applicative f, Foldable t) => t (f a) -> f (t a)
   -- so on #49
@@ -59,4 +61,5 @@ main = do
 seqA :: Integral a => a -> [Bool]
 seqA m = sequenceA [(>3), (<8), even] m
 
+s' :: Maybe Integer
 s' = summed <$> ((,) <$> xs <*> ys)

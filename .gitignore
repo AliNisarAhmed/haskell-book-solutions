@@ -73,3 +73,12 @@ chap-21/exercises/LICENSE
 chap-21/exercises/stack.yaml
 chap-21/exercises/package.yaml
 chap-21/exercises/stack.yaml.lock
+chap-22/web/Setup.hs
+chap-22/web/ChangeLog.md
+chap-22/web/LICENSE
+chap-22/web/package.yaml
+chap-22/web/README.md
+chap-22/web/stack.yaml
+chap-22/web/stack.yaml.lock
+chap-22/web/src/Lib.hs
+chap-22/web/test/Spec.hs
