@@ -46,7 +46,7 @@ rollsCountLogged n g = go 0 (0, []) g
   where
     go :: Int -> (Int, [Die]) -> StdGen -> (Int, [Die])
     go sum c@(count, listOfDie) gen
-      | count >= n = c
+      | sum >= n = c
       | otherwise =
         let (die, nextGen) = randomR (1, 6) gen
         in go (sum + die) (count + 1, (intToDie die): listOfDie) gen
