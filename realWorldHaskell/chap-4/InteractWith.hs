@@ -2,9 +2,13 @@ module InteractWith where
 
 import System.Environment (getArgs)
 import Data.Char
+import Data.List
 
 interactWith function inputFile outputFile = do
   input <- readFile inputFile
+  putStrLn $ input
+  putStrLn $ "------"
+  putStrLn $ function input
   writeFile outputFile (function input)
 
 main :: IO ()
@@ -15,7 +19,18 @@ main = mainWith myFunction
       case args of
         [input, output] -> interactWith function input output
         _ -> putStrLn "Error: exactly two arguments needed"
-    myFunction = map toUpper
+    myFunction = transposeWords
+
+
+transposeWords :: String -> String
+transposeWords = unlines . transpose . lines
+
+-- transposeWords2 :: [String] -> String
+-- transposeWords2 [] = []
+-- transposeWords2 list@(x:xs) = map head list : (transposeWords2 xs)
+
+firstWord :: String -> [Char]
+firstWord str = map head $ splitLines str
 
 
 splitLines [] = []
@@ -29,3 +44,6 @@ splitLines cs =
       _ -> []
 
 isLineTerminator c = c == '\r' || c == '\n'
+
+fixLines :: String -> String
+fixLines = unlines . splitLines
