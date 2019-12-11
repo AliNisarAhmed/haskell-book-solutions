@@ -4,9 +4,13 @@ module Laws where
 
 --** Identity
 -- fmap id x = x
+-- OR
+-- fmap id x = id x = x
 
 --** Compose
 -- fmap (f . g) x = fmap f . fmap g $ x
+-- OR
+-- fmap (compose f g) == compose (fmap f) (fmap g)
 
 
 --!! Applicative Laws **--
