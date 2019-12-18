@@ -12,6 +12,15 @@ module Laws where
 -- OR
 -- fmap (compose f g) == compose (fmap f) (fmap g)
 
+-- !! Contravariant Laws --
+
+-- Normal Functor above is also called Covariant Functor
+-- Contravariant Functor class defines a function called contramap (dual of fmap)
+-- contramap :: (b -> a) -> (g a -> g b)
+
+-- LAWS
+-- contramap id x == x
+-- contramap (compose f g) = compose (contramap g) (contramap f)
 
 --!! Applicative Laws **--
 

@@ -66,12 +66,27 @@ myCycle xs = foldr step [] [1..]
 myCycle2 :: [a] -> [a]
 myCycle2 = foldr (++) [] . repeat
 
-myWords :: [Char] -> [[Char]]
-myWords [] = []
-myWords input = fst res
+-- myWords :: [Char] -> [[Char]]
+-- myWords [] = []
+-- myWords input = fst res
+--   where
+--     res = foldr step ([], []) input
+--     step x (acc, sub) =
+--       if x == ' '
+--       then ([sub] ++ acc, [])
+--       else (acc, [x] ++ sub)
+
+-- great technique, learn and use it!
+myWords :: String -> [String]
+myWords str = foldr step [] (zip str (tail str ++ " "))
   where
-    res = foldr step ([], []) input
-    step x (acc, sub) =
-      if x == ' '
-      then (acc ++ [sub], [])
-      else (acc, [x] ++ sub)
+    step (a, b) gs
+      | isSpace a = gs
+      | isSpace b = [a]: gs
+      | otherwise = (a: (head gs)):(tail gs)
+    isSpace = (== ' ')
+
+myUnlines :: [[Char]] -> [Char]
+myUnlines list = foldr step "" list
+  where
+    step x acc = (x++"\n") ++ acc

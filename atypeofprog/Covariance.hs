@@ -117,9 +117,10 @@ module Covariance where
 
   foo :: Maybe Int -> String
   foo (Just i) = show i
+  foo Nothing = "nothing"
 
   -- fmap foo d => WithInt String
-  -- fmap (Maybe Int -> String) (WithInt Maybe Int) => WithInt String
+  -- fmap (Maybe Int -> String) (WithInt $ Maybe Int) => WithInt String
   -- fmap (a -> c) (WithInt a) => WithInt c
   -- P (a -> c . b -> a)
   -- P c
@@ -153,3 +154,31 @@ module Covariance where
 
   -- When a type variable appears in positive position, the data type is covariant with that variable.
   -- When the variable appears in negative position, the data type is contravariant with that variable.
+
+  -- data WithInt a = WithInt (Int -> a)  is Covariant (coz a is in +ve position)
+  -- data MakeInt a = MakeInt (a -> Int) is Contravariant (coz a is in -ve position)
+
+  comp :: (b -> c) -> (a -> b) -> a -> c
+  comp = (.)
+
+  contraComp :: (a -> b) -> (b -> c) -> a -> c
+  contraComp = flip (.)
+
+  newtype Opz z a = Opz { getOpz :: a -> z }
+
+  opz :: Opz Bool Int
+  opz = Opz (< 10)
+
+  instance Contravariant (Opz a) where
+    contramap f g = Opz (getOpz g . f)
+
+  isTen :: Predicate Int
+  isTen = Predicate (== 10)
+
+  isListOfTen :: Predicate [a]
+  isListOfTen = contramap length isTen
+
+  -- https://typeclasses.com/contravariance
+
+  isIt = getPredicate isListOfTen [1..10]
+  itsNot = getPredicate isListOfTen [1..100]
