@@ -36,7 +36,15 @@ module Laws where
 -- u <*> v <*> w
 -- OR pure f <*> (pure g <*> w)
 
+-- OR (lift compose to the structure of u & v)
+-- this results in Struct (u . v)
+-- apply that to Struc w
+-- resulting in Struct (u . v $ w)
+-- equivalent to 
+-- u <*> (v <*> w)
+
 --** Homomorphism
+-- Homomorphism - structure preserving map b/w two algebraic structures
 -- pure f <*> pure x = pure (f x)
 
 --** Interchange
@@ -44,7 +52,7 @@ module Laws where
 -- usually <*> means -> function <*> value
 -- as per this law
 -- LEFT = lifted function <*> unlifted value
--- RIGHT = (value partially applied, waiting for a function) <*> (lifted function)
+-- RIGHT = (value partially applied, waiting for a function, lifted) <*> (lifted function)
 
 --!! Monad Laws
 

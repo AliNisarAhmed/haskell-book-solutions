@@ -4,6 +4,7 @@
 -- https://two-wrongs.com/a-gentle-introduction-to-monad-transformers.html
 
 import Data.Text
+import Control.Monad
 
 -- Imports that will be needed later:
 import qualified Data.Text.IO as T
@@ -15,7 +16,15 @@ data LoginError
   = InvalidEmail
   | NoSuchUser
   | WrongPassword
-  deriving Show
+  deriving (Eq, Show, Ord)
+
+instance Semigroup LoginError where 
+  (<>) x y = x
+
+instance Monoid LoginError where 
+  mempty = InvalidEmail
+  mappend = (<>)
+  
 
 
 getDomain :: Text -> Either LoginError Text
@@ -32,34 +41,34 @@ printResult =
 
 -----------------
 
-getToken :: IO (Either LoginError Text)
-getToken = do
-  T.putStrLn "Enter email address: "
-  email <- T.getLine
-  return (getDomain email)
+-- getToken :: IO (Either LoginError Text)
+-- getToken = do
+--   T.putStrLn "Enter email address: "
+--   email <- T.getLine
+--   return (getDomain email)
 
-users :: Map Text Text
-users = Map.fromList
-  [ ("example.com", "abc123")
-  , ("gmail.com", "google123")
-  ]
+-- users :: Map Text Text
+-- users = Map.fromList
+--   [ ("example.com", "abc123")
+--   , ("gmail.com", "google123")
+--   ]
 
-userLogin :: IO (Either LoginError Text)
-userLogin = do
-  token <- getToken
-  case token of
-    Right domain ->
-      case Map.lookup domain users of
-        Just userpw -> do
-          T.putStrLn "Enter password: "
-          password <- T.getLine
-          if password == userpw
-          then return token
-          else
-            return (Left WrongPassword)
-        Nothing -> return (Left NoSuchUser)
-    left ->
-      return left
+-- userLogin :: IO (Either LoginError Text)
+-- userLogin = do
+--   token <- getToken
+--   case token of
+--     Right domain ->
+--       case Map.lookup domain users of
+--         Just userpw -> do
+--           T.putStrLn "Enter password: "
+--           password <- T.getLine
+--           if password == userpw
+--           then return token
+--           else
+--             return (Left WrongPassword)
+--         Nothing -> return (Left NoSuchUser)
+--     left ->
+--       return left
 
 -------------------------------------------------
 
@@ -71,23 +80,40 @@ data EitherIO e a
 instance Functor (EitherIO e) where
   fmap f = EitherIO . (fmap . fmap) f . runEitherIO
 
--- instance Monoid e => Applicative (EitherIO e) where
---   pure x = EitherIO (pure (Right x))
---   (<*>) eitherIOF eitherIOX = do
---     eitherFunc <- eitherIOF
---     eitherX <- eitherIOX
---     EitherIO $ return (eitherFunc <*> eitherX)
+instance Monoid e => Applicative (EitherIO e) where
+  pure x = EitherIO (pure (Right x))
+  (<*>) (EitherIO ioEf)  (EitherIO ioEx) = do
+    EitherIO $ (liftA2 . liftA2) ($) ioEf ioEx
+
+instance Monoid e => Monad (EitherIO e) where 
+  return x = EitherIO (return $ Right x)
+  eIO >>= f = do 
+    e <- eIO
+    f e
+
 
 ----------------------------------------------------
 
-data JustRight e a
-  = JustRight {
-    giveMe :: Maybe (Either e a)
-  } deriving (Eq, Show)
+-- getToken using EitherIO
 
-instance Functor (JustRight e) where
-  fmap f = JustRight . (fmap . fmap) f . giveMe
+-- getToken :: EitherIO LoginError Text 
+-- getToken = do 
+--   EitherIO (fmap Right (T.putStrLn "Enter email address"))
+--   input <- EitherIO (fmap Right (T.getLine))
+--   EitherIO (return (getDomain input))
 
--- instance Monoid e => Applicative (JustRight e) where
---   pure x = JustRight (Just (Right x))
---   (<*>) jrFunc jrX =
+-- we need a way to lift IO and Either into EitherIO
+
+liftEither :: Either e a -> EitherIO e a
+liftEither = EitherIO . return 
+
+liftIO :: IO a -> EitherIO e a 
+liftIO = EitherIO . fmap Right
+
+-- getToken re-written using Lifting funcitons
+
+getToken :: Either LoginError Text 
+getToken = do 
+  liftIO $ T.putStrLn "Enter email address"
+  input <- liftIO T.getLine
+  liftEither (getDomain input)
