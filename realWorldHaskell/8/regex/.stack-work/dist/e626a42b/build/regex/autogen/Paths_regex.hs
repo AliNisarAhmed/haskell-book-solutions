@@ -30,7 +30,7 @@ version = Version [0,1,0,0] []
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
 
 bindir     = "C:\\web-dev\\haskell-book-solutions\\realWorldHaskell\\8\\regex\\.stack-work\\install\\2ce8b0a3\\bin"
-libdir     = "C:\\web-dev\\haskell-book-solutions\\realWorldHaskell\\8\\regex\\.stack-work\\install\\2ce8b0a3\\lib\\x86_64-windows-ghc-8.6.5\\regex-0.1.0.0-EYfpP66wqjdLWvnBXZx1m8-regex"
+libdir     = "C:\\web-dev\\haskell-book-solutions\\realWorldHaskell\\8\\regex\\.stack-work\\install\\2ce8b0a3\\lib\\x86_64-windows-ghc-8.6.5\\regex-0.1.0.0-2wIRnbpomnXE5DQ1HvOavm-regex"
 dynlibdir  = "C:\\web-dev\\haskell-book-solutions\\realWorldHaskell\\8\\regex\\.stack-work\\install\\2ce8b0a3\\lib\\x86_64-windows-ghc-8.6.5"
 datadir    = "C:\\web-dev\\haskell-book-solutions\\realWorldHaskell\\8\\regex\\.stack-work\\install\\2ce8b0a3\\share\\x86_64-windows-ghc-8.6.5\\regex-0.1.0.0"
 libexecdir = "C:\\web-dev\\haskell-book-solutions\\realWorldHaskell\\8\\regex\\.stack-work\\install\\2ce8b0a3\\libexec\\x86_64-windows-ghc-8.6.5\\regex-0.1.0.0"

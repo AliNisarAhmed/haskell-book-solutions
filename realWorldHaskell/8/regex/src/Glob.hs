@@ -46,10 +46,10 @@ listMatches dirName pat = do
               else return dirName
   handle ( (const (return []) )  :: IOError -> IO [String]) $ do
     names <- getDirectoryContents dirName'
-    let names' = if isHidden pat
+    let names2 = if isHidden pat
                   then filter isHidden names
                   else filter (not . isHidden) names
-    return (filter (`matchesGlob` pat) name')
+    return (filter (`matchesGlob` pat) names2)
 
 isHidden ('.':_) = True
 isHidden _       = False
