@@ -179,6 +179,12 @@ fits w ""        = True
 fits w ('\n': _) = True
 fits w (c:cs)    = fits (w - 1) cs
 
+-- fill :: Int -> Doc -> Doc
+-- fill num d =
+--   case d of
+--     Empty -> Empty
+--     Char c ->
+
 
 -- value = empty </> char 'a'
 -- -> Concat (Union (Char ' ') Line) (Char 'a')
