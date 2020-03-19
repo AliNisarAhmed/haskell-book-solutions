@@ -4,23 +4,28 @@ module Lib
     ( someFunc
     ) where
 
-import qualified Data.Char                      as Char
-import qualified Data.List                      as List
+import qualified Data.Char                        as Char
+import qualified Data.List                        as List
 
-import           Network.Simple.TCP             as NS
-import           Network.Socket                 (Socket)
-import qualified Network.Socket.ByteString      as Socket
-import qualified Network.Socket.ByteString.Lazy as LSocket
-import           Numeric                        (showHex, showInt)
+import           Control.Concurrent               (threadDelay)
+import           Network.Simple.TCP               as NS
+import           Network.Socket                   (Socket)
+import qualified Network.Socket.ByteString        as Socket
+import qualified Network.Socket.ByteString.Lazy   as LSocket
+import           Numeric                          (showHex, showInt)
 
-import qualified Data.ByteString                as BS
-import qualified Data.ByteString.Char8          as ASCII
-import qualified Data.ByteString.Lazy           as LBS
-import qualified Data.ByteString.Lazy.Char8     as LASCII
+import qualified Data.ByteString                  as BS
+import qualified Data.ByteString.Char8            as ASCII
+import qualified Data.ByteString.Lazy             as LBS
+import qualified Data.ByteString.Lazy.Char8       as LASCII
 
-import qualified Data.ByteString.Builder        as BSB
-import           Data.Functor.Contravariant     (Equivalence (..), contramap,
-                                                 defaultEquivalence)
+import qualified Data.ByteString.Builder          as BSB
+import           Data.Functor.Contravariant       (Equivalence (..), contramap,
+                                                   defaultEquivalence)
+
+import           Control.Applicative              (many)
+import           Data.Attoparsec.ByteString.Char8 (Parser, (<?>))
+import qualified Data.Attoparsec.ByteString.Char8 as P
 
 server :: (Socket -> IO ()) -> IO ()
 server f =
@@ -378,3 +383,141 @@ helloResponse_chunked :: Response
 helloResponse_chunked =
     chunkResponse helloResponse_base
 
+
+--  SLowing it down - chunking and then sending one byte at a time
+
+staticResponseServer_slow :: Response -> IO ()
+staticResponseServer_slow response =
+    server $ \socket ->
+        sendAll_slow socket
+            (BSB.toLazyByteString $ encodeResponse response)
+
+
+sendAll_slow :: Socket -> LBS.ByteString -> IO ()
+sendAll_slow socket lbs =
+    do
+        let (x, y) = LBS.splitAt 1 lbs
+        LSocket.sendAll socket x
+        if (LBS.null y)
+            then return ()
+            else do
+                threadDelay 5000
+                sendAll_slow socket y
+
+infiniteResponse :: Response
+infiniteResponse =
+    chunkResponse $
+        Response
+            (StatusLine http_1_1 status200 reasonOk)
+            [plainTextAsciiHeader]
+            (Just $ infiniteMessageBody)
+
+
+infiniteMessageBody :: MessageBody
+infiniteMessageBody =
+    MessageBody (BSB.toLazyByteString $ foldMap line [1..])
+      where
+          line :: Integer -> BSB.Builder
+          line i = BSB.string7 (showInt i "") <> BSB.char7 '\n'
+
+
+---- Parsing Requests ----
+
+
+requestParser :: Parser Request
+requestParse =
+    do
+        requestLine <- requestLineParser
+        hfs <- headerFieldListParser
+        _ <- crlfParser
+        bodyMaybe <- messageBodyParser hfs
+        return (Request requestLine hfs bodyMaybe)
+    <?> "HTTP-message"
+
+
+requestLineParser :: Parser RequestLine
+requestLineParser =
+    do
+        method <- methodParser
+        _ <- spParser
+        requestTarget <- requestTargetParser
+        _ <- spParser
+        httpVersion <- httpVersionParser
+        _ <- crlfParser
+        return $ RequestLine method requestTarget httpVersion
+    <?> "request-line"
+
+
+methodParser :: Parser Method
+methodParser =
+    do
+        x <- tokenParser
+        return (Method x)
+    <?> "method"
+
+
+requestTargetParser :: Parser RequestTarget
+requestTargetParser =
+    do
+        x <- P.takeWhile1 (/= ' ')
+        return (RequestTarget x)
+    <?> "request-target"
+
+
+httpVersionParser :: Parser HttpVersion
+httpVersionParser =
+    do
+        _ <- httpNameParser
+        _ <- P.char '/'
+        x <- digitParser
+        _ <- P.char '.'
+        y <- digitParser
+        return $ HttpVersion y
+    <?> "Http-version"
+
+
+httpNameParser :: Parser ()
+httpNameParser =
+    do
+        _ <- P.string (ASCII.pack "HTTP")
+        return ()
+    <?> "HTTP-name"
+
+
+headerFieldListParser :: Parser [HeaderField]
+headerFieldListParser =
+    many $
+        do
+            x <- headerFieldParser
+            _ <- crlfParser
+            return x
+
+headerFieldParser :: Parser HeaderField
+headerFieldParser =
+    do
+        fieldName <- fieldNameParser
+        _ <- P.char ':'
+        _ <- owsParser
+        fieldValue <- fieldValueParser
+        _ <- owsParser
+        return $ HeaderField fieldName fieldValue
+    <?> "header-field"
+
+
+fieldNameParser :: Parser FieldName
+fieldNameParser =
+    do
+        x <- tokenParser
+        return $ FieldName x
+    <$> "field-name"
+
+
+fieldValueParser :: Parser FieldValue
+fieldValueParser =
+    do
+        (x, _) <- P.match $
+            P.sepBy
+                (P.takeWhile1 isVchar) -- sequence of visible characters
+                (Prelude.takeWhile1 $ (P.inClass " \t"))  -- separated by whitespace
+        return $ FieldValue x
+    <?> "field-value"
