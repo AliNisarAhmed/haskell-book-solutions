@@ -1,4 +1,5 @@
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE TypeApplications      #-}
 
 module Lib
     ( someFunc
@@ -23,9 +24,13 @@ import qualified Data.ByteString.Builder          as BSB
 import           Data.Functor.Contravariant       (Equivalence (..), contramap,
                                                    defaultEquivalence)
 
-import           Control.Applicative              (many)
+import           Control.Applicative              (many, optional, (<|>))
 import           Data.Attoparsec.ByteString.Char8 (Parser, (<?>))
 import qualified Data.Attoparsec.ByteString.Char8 as P
+import           Data.List.NonEmpty               (NonEmpty ((:|)))
+import qualified Data.List.NonEmpty               as NE
+import qualified Data.Maybe                       as Maybe
+import           Numeric.Natural                  (Natural)
 
 server :: (Socket -> IO ()) -> IO ()
 server f =
@@ -517,7 +522,179 @@ fieldValueParser =
     do
         (x, _) <- P.match $
             P.sepBy
-                (P.takeWhile1 isVchar) -- sequence of visible characters
-                (Prelude.takeWhile1 $ (P.inClass " \t"))  -- separated by whitespace
+                (P.takeWhile1 isVisiblechar) -- sequence of visible characters
+                (P.takeWhile1 $ (P.inClass " \t"))  -- separated by whitespace
         return $ FieldValue x
     <?> "field-value"
+
+
+-- Miscellaneous functions
+
+crlfParser :: Parser ()
+crlfParser =
+    do
+        _ <- P.string (ASCII.pack "\r\n")
+        return ()
+    <?> "CRLF"
+
+spParser :: Parser ()
+spParser =
+    do
+        _ <- P.char ' '
+        return ()
+    <?> "SP"
+
+-- all "visible" characters (any char other than whitespace or control chars), in ASCII are between '!' and '~', so
+
+isVisiblechar :: Char -> Bool
+isVisiblechar c =
+    c >= '!' && c <= '~'
+
+
+digitParser :: Parser Digit
+digitParser =
+    do
+        x <- P.satisfy P.isDigit
+        case (charDigit x) of
+            Just d  -> return d
+            Nothing -> fail "Must be between 0 and 9"
+    <?> "DIGIT"
+
+
+charDigit :: Char -> Maybe Digit
+charDigit c =
+    case x of
+        '0' -> Just D0
+        '1' -> Just D1
+        '2' -> Just D2
+        '3' -> Just D3
+        '4' -> Just D4
+        '5' -> Just D5
+        '6' -> Just D6
+        '7' -> Just D7
+        '8' -> Just D8
+        '9' -> Just D9
+        _   -> Nothing
+
+isWhiteSpace :: Char -> Bool
+isWhiteSpace = P.inClass " \t"
+
+owsParser :: Parser ()
+owsParser =
+    do
+        _ <- P.takeWhile isWhiteSpace
+        return ()
+    <?> "OWS"
+
+tokenParser :: Parser BS.ByteString
+tokenParser =
+    P.takeWhile1 isTchar
+    <?> "token"
+
+isTchar :: Char -> Bool
+isTchar c =
+    P.isDigit c ||
+    P.isAlpha_ascii c ||
+    P.inClass "!#$%&'*+-.^|~" c
+
+
+---- Message body Parser ---
+
+messageBodyParser :: [HeaderField] -> Parser (Maybe MessageBody)
+messageBodyParser =
+    parserForBodyEncoding . discernBodyEncoding
+
+
+discernBodyEncoding :: [HeaderField] -> Either String (Maybe BodyEncoding)
+discernBodyEncoding hfs =
+    let
+        allResults :: Either String [BodyEncoding]
+        allResults =
+            -- fmap catMaybes (traverse headerFieldBodyEncoding hfs)
+            -- or, using do
+            do
+                -- traverse's sign here is
+                -- :: (HeaderField -> Either String (Maybe BodyEncoding))
+                -- -> [HeaderField]
+                -- -> Either String [Maybe BodyEncoding]
+                maybes <- traverse headerFieldBodyEncoding hfs
+                -- catMaybes removes Nothing values from [Maybe]
+                return (Maybe.catMaybes maybes)
+    in
+        case allResults of
+            Right [] -> Right Nothing
+            Right [x] -> Right $ Just x
+            -- below: invalid case since it means multiple headers of same field
+            Right (_: _) -> Left "Cannot determine body encoding; \
+                                 \ there are too many relevant headers"
+            Left err -> Left ("Cannot determine body encoding \
+                             \ due to invalid headers: " ++ err)
+
+
+
+headerFieldBodyEncoding :: HeaderField -> Either String (Maybe BodyEncoding)
+headerFieldBodyEncoding (HeaderField name value)
+    | nameIs "Content-Length" =
+        do
+            len <- parseFieldValue decimalParser value
+            return (Just (ContentLength len))
+    | nameIs "Transfer-Encoding" =
+        do
+            transferEncodings <- parseFieldValue transferEncodingParser value
+            let isChunked = isChunkedTransferCoding (NE.last transferCodings)
+            return (if isChunked then (Just Chunked) else Nothing)
+
+    | otherwise =
+        return Nothing
+    where
+        nameIs x =
+            getEquivalence fieldNameEquivalence name (FieldName $ ASCII.pack x)
+
+parserForBodyEncoding :: _ -> Parser (Maybe MessageBody)
+
+
+
+-- using Natural here because content length cannot be negative
+
+data BodyEncoding
+    = ContentLength Natural | Chunked
+
+
+-- So our parseFieldValue function will:
+    -- Apply (<* P.endOfInput) to the parser to make sure that we’re parsing the entire field value;
+    -- Use parseOnly to apply the resulting parser to the FieldValue’s ByteString.
+parseFieldValue :: Parser a -> FieldValue -> Either String a
+parseFieldValue p (FieldValue value) =
+    P.parseOnly (p <* P.endOfInput) value
+
+
+decimalParser :: Parser Natural
+decimalParser =
+    P.decimal <?> "1*DIGIT"
+
+
+listParser :: Parser (NonEmpty BS.ByteString)
+listParser =
+    do
+        x <- -- ??
+        xs <- many $
+            do
+                -- ??
+        return (x :| xs)
+
+listElementParser :: Parser BS.ByteString
+listElementParser =
+    -- ??
+
+unqoutedElementParser :: Parser BS.ByteString
+unqoutedElementParser =
+    P.takeWhile -- ??
+
+
+quotedElementParser :: Parser BS.ByteString
+quotedElementParser =
+    do
+        _ <- P.string (ASCII.pack "\"")
+
+
+transferEncodingParser :: Parser (NonEmpty TransferCoding)

@@ -24,6 +24,7 @@ dependencies:
   - network-simple
   - network
   - bytestring
+  - attoparsec
 
 library:
   source-dirs: src
