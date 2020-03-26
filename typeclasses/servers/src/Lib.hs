@@ -676,10 +676,10 @@ decimalParser =
 listParser :: Parser (NonEmpty BS.ByteString)
 listParser =
     do
-        x <- -- ??
+        x <- unqoutedElementParser
         xs <- many $
             do
-                -- ??
+                quotedElementParser
         return (x :| xs)
 
 listElementParser :: Parser BS.ByteString
@@ -688,13 +688,14 @@ listElementParser =
 
 unqoutedElementParser :: Parser BS.ByteString
 unqoutedElementParser =
-    P.takeWhile -- ??
+    P.takeWhile ((/=) (ASCII.pack "\""))
 
 
 quotedElementParser :: Parser BS.ByteString
 quotedElementParser =
     do
-        _ <- P.string (ASCII.pack "\"")
+        x <- P.string (ASCII.pack "\"")
+        return x
 
 
 transferEncodingParser :: Parser (NonEmpty TransferCoding)
