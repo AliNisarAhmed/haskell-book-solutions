@@ -1,7 +1,7 @@
 module Lib where
 
-import Data.List (sort)
-import Data.Char (isAlpha)
+import           Data.Char (isAlpha)
+import           Data.List (sort)
 
 areAnagrams :: String -> String -> String
 areAnagrams word1 word2 =
@@ -13,7 +13,7 @@ areAnagrams word1 word2 =
                 Just word2 ->
                     case (isAnagram word1 word2) of
                         False -> "Not Anagrams"
-                        True -> "These words are Anagrams"
+                        True  -> "These words are Anagrams"
 
 isAnagram :: String -> String -> Bool
 isAnagram word1 word2 =
@@ -26,7 +26,7 @@ isWord word =
         False ->
             case (all isAlpha word) of
                 False -> Nothing
-                True -> Just word
+                True  -> Just word
 
 -- main :: IO ()
 -- main = do

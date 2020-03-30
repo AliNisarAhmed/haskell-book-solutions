@@ -684,7 +684,7 @@ listParser =
 
 listElementParser :: Parser BS.ByteString
 listElementParser =
-    -- ??
+
 
 unqoutedElementParser :: Parser BS.ByteString
 unqoutedElementParser =
