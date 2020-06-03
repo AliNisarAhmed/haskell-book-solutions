@@ -4,13 +4,13 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0614b8e64616746b469e5619f78561481b360347d960b836bd57a71ae2f27694
+-- hash: 3894c36906fba80b953c310184aa15016926025de9eb818e0ffd9af1b62c053c
 
-name:           validation
+name:           functors-bifunctors
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/validation#readme>
-homepage:       https://github.com/githubuser/validation#readme
-bug-reports:    https://github.com/githubuser/validation/issues
+description:    Please see the README on GitHub at <https://github.com/githubuser/functors-bifunctors#readme>
+homepage:       https://github.com/githubuser/functors-bifunctors#readme
+bug-reports:    https://github.com/githubuser/functors-bifunctors/issues
 author:         Author name here
 maintainer:     example@example.com
 copyright:      2020 Author name here
@@ -23,40 +23,40 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/validation
+  location: https://github.com/githubuser/functors-bifunctors
 
 library
   exposed-modules:
       Lib
   other-modules:
-      Paths_validation
+      Paths_functors_bifunctors
   hs-source-dirs:
       src
   build-depends:
       base >=4.7 && <5
   default-language: Haskell2010
 
-executable validation-exe
+executable functors-bifunctors-exe
   main-is: Main.hs
   other-modules:
-      Paths_validation
+      Paths_functors_bifunctors
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
-    , validation
+    , functors-bifunctors
   default-language: Haskell2010
 
-test-suite validation-test
+test-suite functors-bifunctors-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_validation
+      Paths_functors_bifunctors
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
-    , validation
+    , functors-bifunctors
   default-language: Haskell2010
